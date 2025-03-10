@@ -15,9 +15,22 @@ namespace WindowsFormsApp1
 {
     public partial class Login : Form
     {
-        
-        //private void para retornar conexion SQL
 
+        //private void para retornar conexion SQL
+        private SqlConnection ConnectionToSQL() //metodo que conecta la base de datos haciendo uso de App.config
+        {
+            try //se agrega un capturador de errores por si la conexion falla
+            {
+                var conString = ConfigurationManager.ConnectionStrings["TareasDB"].ConnectionString;
+                SqlConnection Conector = new SqlConnection(conString);
+                return Conector;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return null;
+            }
+        }
         public Login()
         {
             InitializeComponent();
@@ -68,32 +81,27 @@ namespace WindowsFormsApp1
 
         private void btnIngresar_Click(object sender, EventArgs e)
         {
-
+            //atrapo los textos de los 2 textbox
             string usuario = txtUser.Text;
             string contrasena = txtPassword.Text;
-            string connectionString = "server=ABEPC\\SQLEXPRESS;Initial Catalog=TareasDB;Integrated Security=True;TrustServerCertificate=True";
-
-
             // Consulta SQL para verificar las credenciales
             string query = "SELECT COUNT(*) FROM Usuarios WHERE nombreUsuario = @usuario AND contrasena = @contrasena";
-
-            using (SqlConnection con = new SqlConnection(connectionString))
+            //using (SqlConnection con = new SqlConnection(connectionString))
             {
                 try
                 {
+                    SqlConnection con = ConnectionToSQL();
                     con.Open();
                     using (SqlCommand cmd = new SqlCommand(query, con))
                     {
                         // Agregar parámetros para evitar SQL Injection
                         cmd.Parameters.AddWithValue("@usuario", usuario);
                         cmd.Parameters.AddWithValue("@contrasena", contrasena);
-
                         // Ejecutar la consulta y obtener el resultado
                         int count = (int)cmd.ExecuteScalar();
-
                         if (count > 0)
                         {
-                            MessageBox.Show("Hola!", "Ingreso exitoso", MessageBoxButtons.OK);
+                            MessageBox.Show("Ingreso exitoso!", "Hola!", MessageBoxButtons.OK);
                             this.Hide();
                             Interfaz inter = new Interfaz();
                             inter.Show();
@@ -110,8 +118,6 @@ namespace WindowsFormsApp1
                 }
             }
         }
-        
-
         private void LeerUsuario(TextBox textBox)
         {
             if (string.IsNullOrEmpty(textBox.Text))
