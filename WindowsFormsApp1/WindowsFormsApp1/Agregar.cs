@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
@@ -13,13 +14,25 @@ namespace WindowsFormsApp1
 {
     public partial class Agregar : Form
     {
-        //cadena de conexion
-        private readonly string connectionString = "server=ABEPC\\SQLEXPRESS;Initial Catalog=TareasDB;Integrated Security=True;TrustServerCertificate=True";
+        //private void para retornar conexion SQL
+        private SqlConnection ConnectionToSQL() //metodo que conecta la base de datos haciendo uso de App.config
+        {
+            try //se agrega un capturador de errores por si la conexion falla
+            {
+                var conString = ConfigurationManager.ConnectionStrings["TareasDB"].ConnectionString;
+                SqlConnection Conector = new SqlConnection(conString);
+                return Conector;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return null;
+            }
+        }
         public Agregar()
         {
             InitializeComponent();
         }
-
         private void AgregarTarea()
         {
             // 1. Obtener los valores de los controles
@@ -27,7 +40,6 @@ namespace WindowsFormsApp1
             string descripcion = txtDescripcionTarea.Text.Trim();
             int categoriaId = cmbCategoriaTarea.SelectedIndex;
             int estadoId = cmbEstadoTarea.SelectedIndex;
-            int usuarioId = ObtenerUsuario(); 
 
             // Validar que los campos obligatorios no estén vacíos
             if (string.IsNullOrEmpty(titulo) || string.IsNullOrEmpty(descripcion))
@@ -37,13 +49,13 @@ namespace WindowsFormsApp1
             }
 
             // ConnectionString a la base de datos
-            string connectionString = "server=ABEPC\\SQLEXPRESS;Initial Catalog=TareasDB;Integrated Security=True;TrustServerCertificate=True";
+            //string connectionString = "server=ABEPC\\SQLEXPRESS;Initial Catalog=TareasDB;Integrated Security=True;TrustServerCertificate=True";
 
             // 2. Crear la consulta SQL con parámetros
-            string query = "INSERT INTO Tareas (titulo, descripcion, categoriaId, usuarioId, estadoId) " +
-                           "VALUES (@titulo, @descripcion, @categoriaId, @usuarioId, @estadoId)";
+            string query = "INSERT INTO Tareas (titulo, descripcion, categoriaId, estadoId) " +
+                           "VALUES (@titulo, @descripcion, @categoriaId, @estadoId)";
 
-            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlConnection con = ConnectionToSQL())
             {
                 try
                 {
@@ -54,7 +66,6 @@ namespace WindowsFormsApp1
                         cmd.Parameters.AddWithValue("@titulo", titulo);
                         cmd.Parameters.AddWithValue("@descripcion", descripcion);
                         cmd.Parameters.AddWithValue("@categoriaId", categoriaId);
-                        cmd.Parameters.AddWithValue("@usuarioId", usuarioId);
                         cmd.Parameters.AddWithValue("@estadoId", estadoId);
 
                         // 4. Ejecutar la consulta
@@ -76,7 +87,7 @@ namespace WindowsFormsApp1
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No has seleccionado y/o ingresado todos los campos requeridos","Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -88,12 +99,6 @@ namespace WindowsFormsApp1
             txtDescripcionTarea.Clear();
             cmbCategoriaTarea.SelectedIndex = -1;
             cmbEstadoTarea.SelectedIndex = -1;
-        }
-
-        // Método para obtener el usuario actual (ajústalo según tu lógica de autenticación)
-        private int ObtenerUsuario()
-        {
-            return 1; // Aquí deberías obtener el ID del usuario autenticado
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
